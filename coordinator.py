@@ -22,6 +22,7 @@ REQS_HVOLT = [-1.0] * REQ_SZ  # hall sensor windvane voltage
 REQS_HVALUE = [0] * REQ_SZ    # hall sensor windvane ADC digital value
 REQS_HDEGREES = [0.0] * REQ_SZ # Hall sensor windvance true degrees
 REQS_HDIR = [""] * REQ_SZ     # Hall sensor windvane true direction str
+REQS_MDIR = [""] * REQ_SZ     # Hall sensor windvane magnetic direction str
 
 REQS_RAIN = [-1.0] * REQ_SZ   # inches
 REQS_DUMP = [0] * REQ_SZ      # count of bucket dumps
@@ -78,6 +79,7 @@ class CoordinatorThread(gb.threading.Thread):
         global REQS_HVALUE
         global REQS_HDEGREES
         global REQS_HDIR
+        global REQS_MDIR
 
         msgType = msg[0]
         if (gb.DIAG_LEVEL & gb.WIND_DIR_MSG or
@@ -93,6 +95,7 @@ class CoordinatorThread(gb.threading.Thread):
         hall_value = msg[7]
         hall_winddegrees = msg[8]     # true degrees
         hall_winddir_str = msg[9]     # true dir str (16-point)
+        hall_mag_dir_str = msg[10]    # magnetic dir str (8-point)
 
         REQS_RVOLT[req_id] = resistor_volts
         REQS_RVALUE[req_id] = resistor_value
@@ -102,6 +105,7 @@ class CoordinatorThread(gb.threading.Thread):
         REQS_HVALUE[req_id] = hall_value
         REQS_HDEGREES[req_id] = hall_winddegrees   # true degrees
         REQS_HDIR[req_id] = hall_winddir_str       # true dir str
+        REQS_MDIR[req_id] = hall_mag_dir_str       # magnetic dir str
 
     #---------------------------------------------------------
     # Process rain fall information from rain gauge process
@@ -154,7 +158,7 @@ class CoordinatorThread(gb.threading.Thread):
     def send_reading_to_db(self, db_q, tm_str, wavg1, wsdev1,
                            wavg5, wsdev5, windspeed,
                            w_rvolt, w_rval, wrdir, wrdir_str,
-                           w_hvolt, w_hval, wdegrees, w_hdir_str,
+                           w_hvolt, w_hval, wdegrees, w_hdir_str, w_mdir_str,
                            rdump_cnt, rtally):
 
         msg = []
@@ -177,6 +181,7 @@ class CoordinatorThread(gb.threading.Thread):
         msg.append(w_hval)
         msg.append(wdegrees)
         msg.append(w_hdir_str)
+        msg.append(w_mdir_str)
 
         msg.append(rdump_cnt)
         msg.append(rtally)
@@ -252,6 +257,7 @@ class CoordinatorThread(gb.threading.Thread):
         global REQS_HVALUE
         global REQS_HDEGREES
         global REQS_HDIR
+        global REQS_MDIR
         global REQS_RAIN
         global REQS_DUMP
 
@@ -441,6 +447,7 @@ class CoordinatorThread(gb.threading.Thread):
                         wind_hval = REQS_HVALUE[ix]
                         wind_degrees = REQS_HDEGREES[ix]
                         wind_hdir_str = REQS_HDIR[ix]
+                        wind_mdir_str = REQS_MDIR[ix]
 
                         date_seconds = str(
                                     gb.datetime.fromtimestamp(REQS_TIME[ix]))
@@ -477,6 +484,7 @@ class CoordinatorThread(gb.threading.Thread):
                                                     wind_rdir, wind_rdir_str,
                                                     wind_hvolt, wind_hval, 
                                                     wind_degrees, wind_hdir_str,
+                                                    wind_mdir_str,
                                                     rain_dump_cnt, rain_tally)
 
                             old_wind_avg = wind_avg1
@@ -500,6 +508,7 @@ class CoordinatorThread(gb.threading.Thread):
                         REQS_HVALUE[ix] = -1
                         REQS_HDEGREES[ix] = float(-1.0)
                         REQS_HDIR[ix] = ""
+                        REQS_MDIR[ix] = ""
 
                         REQS_RAIN[ix] = -1.0
                         REQS_DUMP[ix] = -1
