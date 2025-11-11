@@ -51,7 +51,7 @@ class WindvaneThread(gb.threading.Thread):
     #---------------------------------------------------------
     def send_direction(self, co_q_out, msg_in, resistor_volts, resistor_value,
                        resistor_wind_dir_str, hall_volts, hall_value,
-                       hall_wind_dir_str, hall_wind_degrees):
+                       hall_wind_dir_str, hall_wind_degrees, hall_mag_dir_str):
 
         # r_* is used for resistance based windvane
         # hall_* is used for hall effect (magfet) windvane
@@ -65,11 +65,12 @@ class WindvaneThread(gb.threading.Thread):
         msg.append(req_id)
         msg.append(resistor_volts)
         msg.append(resistor_value)
-        msg.append(resistor_wind_dir_int)  # magnetic direction str (8 point)
+        msg.append(resistor_wind_dir_int)  # wind dir magnetic str (8 point)
         msg.append(hall_volts)
         msg.append(hall_value)
-        msg.append(hall_wind_degrees)      # based on true degrees
-        msg.append(hall_wind_dir_str)      # true direction str (16 point)
+        msg.append(hall_wind_degrees)      # wind degrees true
+        msg.append(hall_wind_dir_str)      # wind dir true str (16 point)
+        msg.append(hall_mag_dir_str)       # wind dir true str (16 point)
         if (gb.DIAG_LEVEL & gb.WIND_DIR_MSG):
             gb.logging.info("%s sending %s(%d)" %
                             (nm, co.get_co_msg_str(msgType), msgType))
@@ -136,7 +137,7 @@ class WindvaneThread(gb.threading.Thread):
         return dir
 
     #---------------------------------------------------------
-    # Get 8-point direction string from comparison
+    # Get 8-point direction string for comparison
     # against resister windvane bearing
     #---------------------------------------------------------
     def get_8_point_direction_str(self, degrees):
@@ -494,6 +495,7 @@ class WindvaneThread(gb.threading.Thread):
         gb.logging.info("ADS1115 (i2c) initialized")
 
         magfet_dir_str = ""
+        dir8 = ""
 
         alive_counter = 0
 
@@ -532,7 +534,8 @@ class WindvaneThread(gb.threading.Thread):
                                         wv_r_volts, wv_r_value,
                                         wv_r_dir_str,
                                         wv_hall_volts, wv_hall_value,
-                                        magfet_dir_str, true_magfet_degrees)
+                                        magfet_dir_str, true_magfet_degrees,
+                                        dir8)
 
                 else:
                     gb.logging.error("Invalid WD message type: %d" % (msgType))
@@ -576,15 +579,19 @@ class WindvaneThread(gb.threading.Thread):
                                 (true_magfet_degrees, magfet_dir_str))
 
             #----------------------------------------
-            # Determine 8-point direction for resistor windvane
+            # Determine magnetic 8-point direction for comparison
+            # to resistor windvane direction
             #----------------------------------------
 
             # Get 8-point direction using magfet reading before
-            # declination adjustment (i.e., use magnetic reading)
+            # declination adjustment (i.e., magnetic reading)
             dir8, dir8_int = self.get_8_point_direction_str(degree_gain)
 
-            # Find min/max resistor windvane counts for each direction
-            # Minimize maximum allowed changed when setting high or low
+            #----------------------------------------
+            # Find/update min/max resistor windvane counts for each
+            # 8-point direction. Minimize maximum allowed changed
+            # when setting high or low
+            #----------------------------------------
             tm_str = gb.get_date_with_seconds(gb.get_localdate_str())
             if R_VAL_L[dir8_int] == R_HL_MAX:
                 R_VAL_L[dir8_int] = wv_r_value

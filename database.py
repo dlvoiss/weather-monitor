@@ -1140,15 +1140,16 @@ class DatabaseThread(gb.threading.Thread):
         wrvolt     = msg[7]
         wrval      = msg[8]
         wrdir      = msg[9]
-        wrdir_str  = msg[10]
+        wrdir_str  = msg[10]    # magnetic 8-point resistor wind dir str
 
         whvolt     = msg[11]
         whval      = msg[12]
-        whdeg      = msg[13]
-        whdir_str  = msg[14]
+        whdeg      = msg[13]     # true wind direction degrees
+        whdir_str  = msg[14]     # true 16-point wind direction str
+        wmdir_str  = msg[15]     # magnetic 8-point wind direction str
 
-        rain_dump_cnt = msg[15]  # teeter-totter bucket dumps
-        rain_tally    = msg[16]  # inches
+        rain_dump_cnt = msg[16]  # teeter-totter bucket dumps
+        rain_tally    = msg[17]  # inches
 
         if (gb.DIAG_LEVEL & gb.DB):
             gb.logging.info("Running process_weather_reading(): tmstamp %s" %
@@ -1159,16 +1160,11 @@ class DatabaseThread(gb.threading.Thread):
         db_id = 20
 
         try:
-            #add_reading = ("REPLACE INTO windrain "
-            #             "(recordType, tmstamp, dbid, windavg1, windsdev1, windavg5, windsdev5, windspeed, dir, winddir, rainfall, rainfall_counter) "
-            #             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
-            #data_add = ('AVG', tm_str, db_id, wavg1, wsdev1, wavg5, wsdev5, windspeed, wrdir, wrdir_str, rain_tally, rain_dump_cnt)
-
             add_reading = ("REPLACE INTO windrain "
-                         "(recordType, tmstamp, dbid, windavg1, windsdev1, windavg5, windsdev5, windspeed, wind_h_volts, wind_h_val, wind_degree, wind_dir_str, wind_r_volts, wind_r_val, dir, winddir, rainfall, rainfall_counter) "
-                         "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
+                         "(recordType, tmstamp, dbid, windavg1, windsdev1, windavg5, windsdev5, windspeed, wind_h_volts, wind_h_val, wind_degree, wind_dir_str, wind_mag_dir_str, wind_r_volts, wind_r_val, dir, winddir, rainfall, rainfall_counter) "
+                         "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
 
-            data_add = ('AVG', tm_str, db_id, wavg1, wsdev1, wavg5, wsdev5, windspeed, whvolt, whval, whdeg, whdir_str, wrvolt, wrval, wrdir, wrdir_str, rain_tally, rain_dump_cnt)
+            data_add = ('AVG', tm_str, db_id, wavg1, wsdev1, wavg5, wsdev5, windspeed, whvolt, whval, whdeg, whdir_str, wmdir_str, wrvolt, wrval, wrdir, wrdir_str, rain_tally, rain_dump_cnt)
 
             self.db_cursor.execute(add_reading, data_add)
             self.db_cursor.execute("COMMIT")
