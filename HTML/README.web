@@ -1,4 +1,3 @@
-
 The files should be placed in /var/www/html to use on a Raspberry Pi
 All testing and use of these files has been on a Raspberry Pi 4B.  In
 addition, the group and owner for these php files may need to be changed
